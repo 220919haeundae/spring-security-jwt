@@ -1,0 +1,712 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>JWT 취약성과 보완방법</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+    margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(55, 53, 47, 1);
+}
+.highlight-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.highlight-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.highlight-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.highlight-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.highlight-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.highlight-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.highlight-default_background {
+	color: rgba(55, 53, 47, 1);
+}
+.highlight-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.highlight-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.highlight-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.highlight-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.highlight-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.highlight-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.highlight-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.highlight-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.highlight-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.block-color-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.block-color-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.block-color-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.block-color-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.block-color-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.block-color-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.block-color-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.block-color-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.block-color-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.block-color-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.block-color-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.select-value-color-uiBlue { background-color: rgba(35, 131, 226, .07); }
+.select-value-color-pink { background-color: rgba(245, 224, 233, 1); }
+.select-value-color-purple { background-color: rgba(232, 222, 238, 1); }
+.select-value-color-green { background-color: rgba(219, 237, 219, 1); }
+.select-value-color-gray { background-color: rgba(227, 226, 224, 1); }
+.select-value-color-transparentGray { background-color: rgba(227, 226, 224, 0); }
+.select-value-color-translucentGray { background-color: rgba(0, 0, 0, 0.06); }
+.select-value-color-orange { background-color: rgba(250, 222, 201, 1); }
+.select-value-color-brown { background-color: rgba(238, 224, 218, 1); }
+.select-value-color-red { background-color: rgba(255, 226, 221, 1); }
+.select-value-color-yellow { background-color: rgba(253, 236, 200, 1); }
+.select-value-color-blue { background-color: rgba(211, 229, 239, 1); }
+.select-value-color-pageGlass { background-color: undefined; }
+.select-value-color-washGlass { background-color: undefined; }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="1596d82a-d721-8012-a66a-d768bbd3b0fc" class="page sans"><header><h1 class="page-title">JWT 취약성과 보완방법</h1><p class="page-description"></p></header><div class="page-body"><h2 id="1596d82a-d721-8013-aade-ef945ec79650" class="">1. 토큰 사용 추적</h2><p id="1596d82a-d721-8069-9dbe-ff25866788fe" class="">
+</p><p id="1596d82a-d721-80a8-9139-e4357fcf55e8" class="">“스프링 시큐리티 JWT” 시리즈를 통해 구현한 단일 토큰의 사용처를 추적하면 아래와 같다.</p><p id="1596d82a-d721-80af-8dfc-c4328f0bf319" class="">
+</p><ol type="1" id="1596d82a-d721-8004-a101-fca74f4be975" class="numbered-list" start="1"><li>로그인 성공 JWT 발급 : 서버측 → 클라이언트로 JWT 발급</li></ol><ol type="1" id="1596d82a-d721-80fe-b268-fb94687874bb" class="numbered-list" start="2"><li>권한이 필요한 모든 요청 : 클라이언트 → 서버측 JWT 전송</li></ol><p id="1596d82a-d721-806b-94d2-f194226ec229" class="">
+</p><p id="1596d82a-d721-80e5-8302-cedb75ccc947" class="">권한이 필요한 요청은 서비스에서 많이 발생한다. (회원 CRUD, 게시글/댓글 CRUD, 주문 서비스, 등등)</p><p id="1596d82a-d721-80a8-be16-e71684933c1d" class="">따라서 JWT는 매시간 수많은 요청을 위해 클라이언트의 JS 코드로 HTTP 통신을 통해 서버로 전달된다.</p><p id="1596d82a-d721-80ef-853e-e4508535f6f5" class="">
+</p><p id="1596d82a-d721-809e-8f6d-fbb99b48af32" class="">해커는 클라이언트 측에서 XSS를 이용하거나 HTTP 통신을 가로채서 토큰을 훔칠 수 있기 때문에 여러 기술을 도입하여 탈취를 방지하고 탈취되었을 경우 대비 로직이 존재한다.</p><p id="1596d82a-d721-80d8-bf1a-c81fa05aef5d" class="">
+</p><hr id="1596d82a-d721-809a-a57e-f4e3ee1e5762"/><p id="1596d82a-d721-8012-899c-f2405fcdaebc" class="">
+</p><h2 id="1596d82a-d721-8072-85bc-d023fdc66ec7" class="">2. 다중 토큰 : Refresh 토큰과 생명 주기</h2><p id="1596d82a-d721-8022-956f-e0ed79520cdd" class="">
+</p><p id="1596d82a-d721-806e-9ac1-e1e13871d125" class="">위와 같은 문제가 발생하지 않도록 Access/Refresh 토큰 개념이 등장한다.</p><p id="1596d82a-d721-8003-8cca-d42ec0910ef2" class="">자주 사용되는 토큰의 생명주기는 짧게(약 10분), 이 토큰이 만료되었을 때 함께 받은 Refresh 토큰(24시간 이상)으로 토큰을 재발급.</p><p id="1596d82a-d721-8026-8ea9-e12b87415dcd" class="">(생명주기가 짧으면 만료시 매번 로그인을 진행하는 문제가 발생, 생명주기가 긴 Refresh도 함께 발급한다.)</p><p id="1596d82a-d721-80df-937e-d628ad158bf5" class="">
+</p><p id="1596d82a-d721-80ff-ad7e-e7d4adb7c304" class=""><strong>1. 로그인 성공시 생명주기와 활용도가 다른 토큰 2개 발급 : Access/Refresh</strong></p><p id="1596d82a-d721-80e2-b85c-db6c13ebb920" class="">Access 토큰 : 권한이 필요한 모든 요청 헤더에 사용될 JWT로 탈취 위험을 낮추기 위해 약 10분 정도의 짧은 생명주기를 가진다.</p><p id="1596d82a-d721-80a2-b581-fedf2fa552a8" class="">Refresh 토큰 : Access 토큰이 만료되었을 때 재발급 받기 위한 용도로만 사용되며 약 24시간 이상의 긴 생명주기를 가진다.</p><p id="1596d82a-d721-80f0-836d-d9a4a6899161" class="">
+</p><p id="1596d82a-d721-80ea-9855-f82ced1c8910" class=""><strong>2. 권한이 필요한 모든 요청 : Access 토큰을 통해 요청</strong></p><p id="1596d82a-d721-8015-a99d-eb0280739b5b" class="">Access 토큰만 사용하여 요청하기 때문에 Refresh 토큰은 호출 및 전송을 빈도가 낮음.</p><p id="1596d82a-d721-8064-b760-dc4d5ce47867" class="">
+</p><p id="1596d82a-d721-8045-b2d2-fadd78236be8" class=""><strong>3. 권한이 알맞다는 가정하에 2가지 상황 : 데이터 응답, 토큰 만료 응답</strong></p><p id="1596d82a-d721-8068-97dd-de92d88ef2c4" class="">
+</p><p id="1596d82a-d721-80ca-aeae-d8c0df4db81d" class=""><strong>4. 토큰이 만료된 경우 Refresh 토큰으로 Access 토큰 발급</strong></p><p id="1596d82a-d721-8083-a309-ddd87fac7eba" class="">Access 토큰이 만료되었다는 응답이 돌아왔을 경우 프론트엔드 로직에 의해 “1”에서 발급 받은 Refresh 토큰을 가지고 서버의 특정 경로(Refresh 토큰을 받는 경로)에 요청을 보내어 Access 토큰을 재발급 받는다.</p><p id="1596d82a-d721-80a8-abf0-d8370b24a4a2" class="">
+</p><p id="1596d82a-d721-80e2-a2d9-f1d2f8e08ce0" class=""><strong>5. 서버측에서는 Refresh 토큰을 검증 후 Access 토큰을 새로 발급한다.</strong></p><p id="1596d82a-d721-80fb-a05b-cc340f62a6f8" class="">
+</p><hr id="1596d82a-d721-803b-b972-c0db24e715ed"/><p id="1596d82a-d721-8053-bb33-cd6df9b1b58f" class="">
+</p><h2 id="1596d82a-d721-806c-ac4b-e6e7af4a8bd6" class="">2. 다중 토큰 구현 포인트</h2><ul id="1596d82a-d721-808c-8fa7-edc2dbec36bd" class="bulleted-list"><li style="list-style-type:disc">로그인이 완료되면 successHandler에서 Access/Refresh 토큰 2개를 발급해 응답한다.<p id="1596d82a-d721-80aa-af91-d616490a27c8" class="">각 토큰은 각기 다른 생명주기, payload 정보를 가진다.</p><p id="1596d82a-d721-80a8-a2fd-e186d067de92" class="">
+</p></li></ul><ul id="1596d82a-d721-801d-8f61-d4a3b393b599" class="bulleted-list"><li style="list-style-type:disc">Access 토큰 요청을 검증하는 JWTFilter에서 Access 토큰이 만료된 경우는 프론트 개발자와 협의된 상태 코드와 메시지를 응답한다.</li></ul><p id="1596d82a-d721-8043-ac5e-c2896484d21a" class="">
+</p><ul id="1596d82a-d721-807b-adad-fd9a53e62f50" class="bulleted-list"><li style="list-style-type:disc">프론트측 API 클라이언트 (axios, fetch) 요청시 Access 토큰 만료 요청이 오면 예외문을 통해 Refresh 토큰을 서버측으로 전송하고 Access 토큰을 발급 받는 로직을 수행한다. (기존 Access는 제거)</li></ul><p id="1596d82a-d721-80d6-afca-f1f69c6f3b4c" class="">
+</p><ul id="1596d82a-d721-8048-a38d-cc123b8c5b4f" class="bulleted-list"><li style="list-style-type:disc">서버측에서는 Refresh 토큰을 받을 엔드포인트 (컨트롤러)를 구성하여 Refresh를 검증하고 Access를 응답한다.</li></ul><hr id="1596d82a-d721-80b6-9edc-e1dc249142d4"/><p id="1596d82a-d721-806a-9625-e4651251292a" class="">
+</p><h2 id="1596d82a-d721-80cf-8f99-e85ccc039ce2" class="">3. Refresh 토큰이 탈취되는 경우</h2><p id="1596d82a-d721-80d0-a5b3-f84a9b057ab7" class="">단일 → 다중 토큰으로 전환하며 자주 사용되는 Access 토큰이 탈취되더라도 생명주기가 짧아 피해 확률이 줄었다.</p><p id="1596d82a-d721-80e6-9dfb-e490209cc950" class="">하지만 Refresh 토큰 또한 사용되는 빈도만 적을뿐 탈취될 수 있는 확률이 존재한다. 따라서 Refresh 토큰에 대한 보호 방법도 필요하다.</p><p id="1596d82a-d721-8053-abc2-d18983fc37c0" class="">
+</p><ul id="1596d82a-d721-808c-b681-cddcaac3e257" class="bulleted-list"><li style="list-style-type:disc"><strong>Access/Refresh 토큰의 저장 위치 고려</strong><p id="1596d82a-d721-8097-aed3-fd4e2d8f0488" class="">로컬/세션 스토리지 및 쿠키에 따라 XSS, CSRF 공격의 여부가 결정되기 때문에 각 토큰 사용처에 알맞은 저장소 설정.</p><p id="1596d82a-d721-80a7-a2a0-edc1e8d4dbca" class="">
+</p></li></ul><ul id="1596d82a-d721-80b2-b060-eeaa4e3eee2f" class="bulleted-list"><li style="list-style-type:disc"><strong>Refresh 토큰 Rotate</strong><p id="1596d82a-d721-80f1-a774-da4b957d87be" class="">Access 토큰을 갱신하기 위한 Refresh 토큰 요청 시 서버측에서에서 Refresh 토큰도 재발급을 진행하여 한 번 사용한 Refresh 토큰은 재사용하지 못하도록 한다.</p><p id="1596d82a-d721-80f2-b0b2-fa211b66d55b" class="">
+</p></li></ul><hr id="1596d82a-d721-80b1-8e47-f671998e464c"/><h2 id="1596d82a-d721-80b1-bf93-d8cc656e3dcb" class="">3. Access/Refresh 토큰 저장 위치</h2><p id="1596d82a-d721-8005-afbf-e0123df074be" class="">클라이언트에서 발급 받은 JWT를 저장하기 위해 로컬 스토리지와 쿠키에 대해 많은 고려를 한다. 각 스토리지에 따른 특징과 취약점은 아래와 같다.</p><p id="1596d82a-d721-80dd-aca0-e4c45e6357f4" class="">
+</p><ul id="1596d82a-d721-8071-a751-d688c2bad527" class="bulleted-list"><li style="list-style-type:disc">로컬 스토리지 : XSS 공격에 취약함 : Access 토큰 저장</li></ul><ul id="1596d82a-d721-80ac-8849-d1fb331fce99" class="bulleted-list"><li style="list-style-type:disc">httpOnly 쿠키 : CSRF 공격에 취약함 : Refresh 토큰 저장</li></ul><p id="1596d82a-d721-80c6-8c09-ea4b0915e861" class="">(위와 같은 설정은 필수적이지 않음.)</p><ul id="1596d82a-d721-80e6-897d-c22f8ce07400" class="bulleted-list"><li style="list-style-type:disc"><strong>고려</strong></li></ul><p id="1596d82a-d721-8013-a116-e31235e4c1bc" class="">
+</p><p id="1596d82a-d721-80e5-b885-c6765e998363" class="">JWT의 탈취는 보통 XSS 공격으로 로컬 스토리지에 저장된 JWT를 가져간다. 그럼 쿠키 방식으로 저장하면 안전하지 않을까라는 의문이 들지만, 쿠키 방식은 CSRF 공격에 취약하다. 따라서 각 상황에 알맞게 저장소를 선택해야한다.</p><p id="1596d82a-d721-8032-86d0-e95e2243c058" class="">
+</p><ul id="1596d82a-d721-8027-8adc-e3eaacdefea1" class="bulleted-list"><li style="list-style-type:disc"><strong>Access 토큰</strong></li></ul><p id="1596d82a-d721-8051-8d77-e3f3bc8df408" class="">Access 토큰은 주로 로컬 스토리지에 저장한다. 짧은 생명 주기로 탈취에서 사용까지 기간이 매우 짧고, 에디터 및 업로더에서 XSS를 방어하는 로직을 작성하여 최대한 보호 할 수 있지만 CSRF 공격의 경우 클릭 한 번으로 단시간에 요청이 진행되기 때문.</p><p id="1596d82a-d721-80a4-b2af-c66208a01dd8" class="">권한이 필요한 모든 경로에 사용되기 때문에 CSRF 공격의 위험보다는 XSS 공격을 받는 게 더 나을 수 있다.</p><p id="1596d82a-d721-807e-9892-e422aaafe48a" class="">
+</p><ul id="1596d82a-d721-8006-ad13-cfb8ea45fd17" class="bulleted-list"><li style="list-style-type:disc"><strong>Refresh 토큰</strong></li></ul><p id="1596d82a-d721-8061-aaab-ca98f35bde0e" class="">Refresh 토큰은 주로 쿠키에 저장된다. 쿠키는 XSS 공격을 받을 수 있지만 httpOnly를 설정하면 완벽히 방어할 수 있다. 그럼 가장 중요한 CSRF 공격에 대해 위험하지 않을까라는 의구심이 생긴다.</p><p id="1596d82a-d721-8009-b99e-ea5759f2d2ad" class="">하지만 Refresh 토큰의 사용처는 단 하나인 토큰 재발급 경로다. CSRF는 Access 토큰이 접근하는 회원 정보 수정, 게시글 CRUD에 취약하지만 토큰 재발급 경로에서는 크게 피해를 입힐 만한 로직이 없기 때문이다.</p><hr id="1596d82a-d721-8082-b483-ff96a7c0e9a0"/><h2 id="1596d82a-d721-80ef-8706-d7966b795499" class="">3. Refresh 토큰 Rotate</h2><p id="1596d82a-d721-8083-9804-e4cf4ad70144" class="">위와 같이 저장소의 특징에 알맞은 JWT 보호 방법을 수행해도 탈취 당할 수 있는게 웹 세상입니다. 따라서 생명주기가 긴 Refresh 토큰에 대한 추가적인 방어 조치가 있다.</p><p id="1596d82a-d721-80ba-a7a6-efe92dba54a6" class="">Access 토큰이 만료되어 Refresh 토큰을 가지고 서버 특정 엔드포인트에 재발급을 진행하면 Refresh 토큰 또한 재발급하여 프론트측으로 응답하는 방식으로 Refresh Rotate라고 한다.</p><p id="1596d82a-d721-80ee-8d6a-ed885b98b6e2" class="">
+</p><hr id="1596d82a-d721-8031-9abf-f9601802db13"/><h2 id="1596d82a-d721-80c3-925b-fd41c7fccbe3" class="">4. 로그아웃과 Refresh 토큰 주도권</h2><ul id="1596d82a-d721-80ca-9123-eec5e01fd720" class="bulleted-list"><li style="list-style-type:disc"><strong>문제</strong></li></ul><p id="1596d82a-d721-8095-8873-f87c94bb70a0" class="">로그아웃을 구현하면 프론트측에 존재하는 Access/Refresh 토큰을 제거한다. 그럼 프론트측에서 요청을 보낼 JWT가 없기 때문에 로그아웃이 되었다고 생각하지만 이미 해커가 JWT를 복제 했다면 요청이 수행된다.</p><p id="1596d82a-d721-80ba-a01a-efa4f23074ff" class="">위와 같은 문제가 존재하는 이유는 단순하게 JWT를 발급해준 순간 서버측의 주도권은 없기 때문이다. (세션 방식은 상태를 STATE하게 관리하기 때문에 주도권이 서버측에 있음)</p><p id="1596d82a-d721-804e-bce1-dc3ad90c1711" class="">로그아웃 케이스뿐만 아니라 JWT가 탈취되었을 경우 서버 측 주도권이 없기 때문에 피해를 막을 방법은 생명주기가 끝이나 길 기다리는 방법 뿐이다.</p><p id="1596d82a-d721-8055-9ff0-d9f311800a6b" class="">
+</p><ul id="1596d82a-d721-80a3-988f-fa7e137863f2" class="bulleted-list"><li style="list-style-type:disc"><strong>방어 방법</strong></li></ul><p id="1596d82a-d721-8023-879f-ff551d990ad4" class="">위 문제의 해결법은 생명주기가 긴 Refresh 토큰은 발급과 함께 서버측 저장소에도 저장하여 요청이 올때마다 저장소에 존재하는지 확인하는 방법으로 서버측에서 주도권을 가질 수 있다.</p><p id="1596d82a-d721-80e6-97cc-c365bf042127" class="">만약 로그아웃을 진행하거나 탈취에 의해 피해가 진행되는 경우 서버측 저장소에서 해당 JWT를 삭제하여 피해를 방어할 수 있다.</p><p id="1596d82a-d721-803b-8b57-d09865f509bb" class="">(Refresh 토큰 블랙리스팅이라고도 부른다.)</p><p id="1596d82a-d721-8082-8359-c94ea91c95e9" class="">
+</p><hr id="1596d82a-d721-803c-8718-c899c07b9617"/><h2 id="1596d82a-d721-8094-97b2-d5eab7b03cc2" class="">5. 로그인시 메일 알림</h2><p id="1596d82a-d721-8035-aec4-cdea45a77034" class="">네이버 서비스를 사용하다 보면 평소에 사용하지 않던 IP나 브라우저에서 접근할 경우 사용자의 계정으로 메일 알림이 발생한다.</p><p id="1596d82a-d721-8047-89c2-f7474e931d6d" class="">이때 내가 아닐 경우 “아니요”를 클릭하게되면 서버측 토큰 저장소에서 해당 유저에 대한 Refresh 토큰을 모두 제거하여 앞으로의 인증을 막을 수 있다.</p></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
