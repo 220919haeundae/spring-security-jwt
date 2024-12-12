@@ -60,7 +60,7 @@ public class ReissueController {
         }
 
         // 토큰이 DB에 저장되어 있는지 확인
-        Boolean isExist = refreshRepository.existByRefresh(refresh);
+        Boolean isExist = refreshRepository.existsByRefresh(refresh);
 
         if(!isExist) {
             // response body
